@@ -206,8 +206,10 @@ public abstract class ATMegaFamily extends AtmelMicrocontroller {
         }
 
         public void write(byte val) {
-            for (int cntr = 0; cntr < 8; cntr++)
+            for (int cntr = 0; cntr < 8; cntr++){
                 pins[cntr].write(Arithmetic.getBit(val, cntr));
+                pins[cntr].setPullup(Arithmetic.getBit(val, cntr));
+            }
             value = val;
         }
 
