@@ -130,25 +130,25 @@ public class DeltaQueue {
      * The <code>head</code> field stores a reference to the head of the delta queue, which represents the
      * event that is nearest in the future.
      */
-    protected Link head;
+    private Link head;
 
     /**
      * The <code>freeLinks</code> field stores a reference to any free links that have become unused during
      * the processing of events. A free list is used to prevent garbage from accumulating.
      */
-    protected Link freeLinks;
+    private Link freeLinks;
 
     /**
      * The <code>freeEventLists</code> field stores a reference to any free event links that have become
      * unused during the processing of events. A free list is used to prevent garbage from accumulating.
      */
-    protected EventList freeEventLists;
+    private EventList freeEventLists;
 
     /**
      * The <code>count</code> field stores the total number of cycles that this queue has been advanced, i.e.
      * the sum of all <code>advance()</code> calls.
      */
-    protected long count;
+    private long count;
 
     /**
      * The <code>add</code> method adds an event to be executed in the future.
@@ -156,7 +156,7 @@ public class DeltaQueue {
      * @param t      the event to add
      * @param cycles the number of clock cycles in the future
      */
-    public void insertEvent(Simulator.Event t, long cycles) {
+    public synchronized void insertEvent(Simulator.Event t, long cycles) {
         // degenerate case, nothing in the queue.
         if (head == null) {
             head = newLink(t, cycles, null);
@@ -196,7 +196,7 @@ public class DeltaQueue {
      *
      * @param e the event to remove
      */
-    public void removeEvent(Simulator.Event e) {
+    public synchronized void removeEvent(Simulator.Event e) {
         if (head == null) return;
 
         // search for first link that is "after" this cycle delta
@@ -234,7 +234,7 @@ public class DeltaQueue {
      *
      * @param cycles the number of clock cycles to advance
      */
-    public void advance(long cycles) {
+    public synchronized void advance(long cycles) {
         if ( head == null ) {
             // fast path 1: nothing in the queue
             count += cycles;
@@ -255,7 +255,7 @@ public class DeltaQueue {
     /**
      * The <code>skipAhead()</code> method skips ahead to the next event in the queue and fires it.
      */
-    public void skipAhead() {
+    public synchronized void skipAhead() {
         if ( head == null ) {
             // fast path 1: nothing in the queue
             count++;
@@ -269,7 +269,7 @@ public class DeltaQueue {
         free(h);
     }
 
-    private void advanceSlow(long cycles) {
+    private synchronized void advanceSlow(long cycles) {
         // slow path: head (and maybe more) fires
         while (head != null && cycles > 0) {
 
@@ -314,7 +314,7 @@ public class DeltaQueue {
      *
      * @return the number of clock cycles until the first event will fire
      */
-    public long getFirstEventTime() {
+    public synchronized long getFirstEventTime() {
         if (head != null) return head.delta;
         return -1;
     }
