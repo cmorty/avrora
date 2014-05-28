@@ -240,6 +240,15 @@ public interface Microcontroller {
          * @param o the <code>Output</code> instance to connect to
          */
         public void connectOutput(Output o);
+        
+        /**
+         * The <code>setInput()</code> method sets the current level of the pin. This can be used <b>additionally</b>
+         * to <code>connectInput()</code> to trigger interrupts.
+         *
+         * @param level the <code>Intput</code>
+         */
+        public void setInput(Boolean level);
+        
     }
 
     /**
