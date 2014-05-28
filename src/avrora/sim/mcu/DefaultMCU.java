@@ -34,6 +34,10 @@
 
 package avrora.sim.mcu;
 
+import java.util.ArrayList;
+import java.util.Observable;
+import java.util.Observer;
+
 import avrora.sim.FiniteStateMachine;
 import avrora.sim.Simulator;
 import avrora.sim.output.SimPrinter;
@@ -142,18 +146,34 @@ public abstract class DefaultMCU implements Microcontroller {
      * The <code>Pin</code> class implements a model of a pin on the ATMegaFamily for the general purpose IO
      * ports.
      */
-    protected class Pin implements Microcontroller.Pin {
+    class Pin extends Observable implements Microcontroller.Pin {
         protected final int number;
 
         boolean level;
+        boolean readlevel;
         boolean outputDir;
         boolean pullup;
+        
+        ArrayList<Observer> observers = new ArrayList<Observer>();
 
         Input input;
         Output output;
-
+        
+        
         protected Pin(int num) {
             number = num;
+        }
+
+        public Boolean getOutputDir(){
+            return outputDir;
+        }
+        
+        public Boolean getLevel(){
+            return level;
+        }
+        
+        public Boolean getPullup(){
+            return pullup;
         }
 
         public void connectOutput(Output o) {
@@ -164,22 +184,31 @@ public abstract class DefaultMCU implements Microcontroller {
             input = i;
         }
 
+        
         protected void setOutputDir(boolean out) {
-            outputDir = out;
-            if (out) write(level);
+            if(outputDir != out){
+                outputDir = out;
+                setChanged(); notifyObservers();
+                if (out) write(level);
+            }
         }
 
         protected void setPullup(boolean pull) {
-            pullup = pull;
+            if(pullup != pull){
+                pullup = pull;
+                setChanged(); notifyObservers();
+            }
         }
 
         protected boolean read() {
             boolean result;
             if (!outputDir) {
-                if (input != null)
+                if (input != null) {
                     result = input.read();
-                else
+                    setInput(result);
+                } else {
                     result = pullup;
+                }
 
             } else {
                 result = level;
@@ -225,6 +254,15 @@ public abstract class DefaultMCU implements Microcontroller {
                 String dir = getDirection();
                 pinPrinter.println("WRITE PIN: " + number + ' ' + dir + "-> " + value);
             }
+        }
+
+        @Override
+        public void setInput(Boolean level) {
+            if(readlevel != level){
+                setChanged(); notifyObservers();
+                readlevel = level;
+            }
+            
         }
     }
 }
